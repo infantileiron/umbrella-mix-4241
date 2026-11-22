@@ -10,17 +10,20 @@ from src.utils.queue import wake_worker
 from src.utils.serialization import canonical, checksum
 
 
+def snapshot_for_plan(cursor, plan):
+    cursor.execute(f'SELECT {TICKET_COLUMNS} FROM tickets WHERE branch IN (%s,%s) '
+                   'AND worked_on BETWEEN %s AND %s ORDER BY code',
+                   (plan['focus_branch'], plan['control_branch'], plan['date_from'], plan['date_to']))
+    return canonical(dict(method=METHOD, plan=plan, tickets=cursor.fetchall()))
+
+
 def submit(plan_id, actor):
     with transaction() as cursor:
         cursor.execute(f'SELECT {PLAN_COLUMNS} FROM comparison_plans WHERE id=%s', (plan_id,))
         plan = cursor.fetchone()
         if not plan:
             raise HTTPException(404, '未找到方案版本')
-        cursor.execute(f'SELECT {TICKET_COLUMNS} FROM tickets WHERE branch IN (%s,%s) '
-                       'AND worked_on BETWEEN %s AND %s ORDER BY code',
-                       (plan['focus_branch'], plan['control_branch'], plan['date_from'], plan['date_to']))
-        tickets = cursor.fetchall()
-        snapshot = canonical(dict(method=METHOD, plan=plan, tickets=tickets))
+        snapshot = snapshot_for_plan(cursor, plan)
         digest = checksum(snapshot)
         cursor.execute('INSERT INTO analysis_runs (plan_id, snapshot, snapshot_sha, created_by) VALUES (%s,%s,%s,%s)',
                        (plan_id, snapshot, digest, actor))

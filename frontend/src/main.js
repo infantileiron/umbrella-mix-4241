@@ -1,6 +1,7 @@
 import { api } from './api/workspace.js';
 import { empty } from './components/common/panel.js';
 import { shell } from './components/shell.js';
+import { batches } from './pages/batches.js';
 import { login } from './pages/login.js';
 import { plans } from './pages/plans.js';
 import { results } from './pages/results.js';
@@ -12,7 +13,7 @@ import { setSession, state } from './stores/workspace.js';
 import { esc } from './utils/html.js';
 
 const root = document.querySelector('#app');
-const pages = { tickets, plans, runs, results, review };
+const pages = { tickets, batches, plans, runs, results, review };
 let epoch = 0;
 
 function signOut() {

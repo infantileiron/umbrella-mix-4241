@@ -66,5 +66,10 @@ class StartRun(Input):
     plan_id: int = Field(ge=1)
 
 
+class NewBatch(Input):
+    plan_id: int = Field(ge=1)
+    source: str = Field(min_length=1, max_length=200_000)
+
+
 class DraftText(Input):
     action_text: str = Field(min_length=5, max_length=1000)

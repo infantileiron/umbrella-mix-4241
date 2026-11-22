@@ -44,8 +44,9 @@ tbody tr:hover { background: var(--paper); }
 .empty-panel .btn { margin-top: 5px; }
 .status { color: var(--muted); display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: var(--raw); font-weight: 670; font-size: .76rem; white-space: nowrap; }
 .status i { border-radius: 50%; height: 5px; width: 5px; background: currentColor; }
-.status.completed, .status.published { color: var(--olive); background: var(--olive-soft); }
+.status.completed, .status.published, .status.inserted, .status.revised { color: var(--olive); background: var(--olive-soft); }
 .status.failed, .status.running { color: var(--rust-dark); background: var(--rust-soft); }
+.status.rejected { color: var(--rust-dark); background: var(--rust-soft); }
 .subline { display: block; color: var(--muted); font-size: .79rem; }
 .subline.failure { color: var(--rust-dark); max-width: 270px; }
 .notice { position: fixed; right: 25px; bottom: 20px; z-index: 2; background: var(--olive); color: var(--ivory); padding: 10px 15px; }

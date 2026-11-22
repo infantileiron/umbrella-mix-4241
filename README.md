@@ -8,6 +8,8 @@
 
 分析员在工作台登记或修订单票、另存对照方案、提交计算。业务方依据守恒校验和外推提醒写改进草案。发布后，观察员可查看结果、草案和导出，供两点周会复盘。
 
+雨后集中补录时，分析员把跨网点工票按 CSV 文本整批提交。系统按补录批次逐张处理：同编号重复补录保留一次，修订票与原票按版本处理，缺字段或越过方案日期窗的票留在待处理清单。批次中断后重试从上次进度继续，不重复写入也不丢数据；完成页面列出写入、跳过、拒绝和两点差额对账。后续补票另起新批次，不改写已完成批次。
+
 | 角色 | 账号 | 演示口令 | 主要页面与权限 |
 |---|---|---|---|
 | 业务方 `owner` | `owner` | `RainOwner2026!` | 读台账、方案、所有运行和导出，保存改进草案并发布 |
@@ -38,6 +40,13 @@
 
 方法出处为 Ben Jann, *The Blinder–Oaxaca Decomposition for Linear Regression Models*, The Stata Journal 8(4), 2008, doi:10.1177/1536867X0800800401。
 
+## 补录批次口径
+
+- 每批绑定一个方案版本，日期窗与比较方向以该版本为准。CSV 列序为 `编号,网点,日期,换骨,布损,机构,分钟,备注`，首行表头可省，网点可写 `north`/`south` 或 `BE`/`NQ`，单批最多 500 行。
+- 同编号在批内只写入首次记录；编号已在台账时，内容一致则跳过、不同则按版本修订（`revision` 递增）。缺字段、格式错误或越过日期窗的行记为拒绝并留在待处理清单，不写入台账。
+- 批次逐张落库，中断后由认领队列从上次进度继续；重试不重复写入或丢失数据。处理多次中断的批次可手动重试，已完成批次只读。
+- 批次完成时按台账快照生成一次差额运行，完成页面给出写入、跳过、拒绝计数与两点差额对账（实际差 = 构成差 + 系数差），明细与计数随批次冻结。
+
 ## 启动与开发
 
 ```bash
@@ -52,16 +61,16 @@ docker compose exec -T backend python -m scripts.seed_demo
 |---|---|
 | 前端 | 原生 HTML、CSS、JavaScript ES modules，`frontend/src`。Nginx 代理 `/api/`，支持 SPA 路由 |
 | API | Python 3.11、FastAPI、PyMySQL、JWT，`backend/src` |
-| 计算 | NumPy SVD 最小二乘，`backend/src/services/decomposition.py`，由 `src.worker` 调度 |
-| 持久化 | MySQL 8.0 工票、方案、队列、草案与审计，`backend/migrations/001_initial.sql` |
+| 计算 | NumPy SVD 最小二乘，`backend/src/services/decomposition.py`，由 `src.worker` 调度（补录批次与差额运行共用认领队列） |
+| 持久化 | MySQL 8.0 工票、方案、队列、补录批次、草案与审计，`backend/migrations/001_initial.sql` 与 `002_intake.sql` |
 | 唤醒和导出 | Redis 7 唤醒，MySQL 任务队列为事实来源。worker 用共享卷原子落盘快照 |
 | 演示数据 | `backend/scripts/seed_demo.py` 和 `backend/scripts/seed_cases.py` |
 
-本地开发可用 `python3.11 -m venv .venv` 后在 `backend/` 安装 `requirements.txt`，将 `DB_HOST`、`DB_PORT`、`REDIS_URL` 设为开发 MySQL 和 Redis，先执行初始 SQL，再执行 `python -m scripts.seed_demo`、`uvicorn src.main:app --reload --port 8000` 和 `python -m src.worker`。前端需要支持 `/api/` 代理的静态服务器。批次验收统一从批次目录执行 `bash scripts/verify-project.sh gb-5210`。
+本地开发可用 `python3.11 -m venv .venv` 后在 `backend/` 安装 `requirements.txt`，将 `DB_HOST`、`DB_PORT`、`REDIS_URL` 设为开发 MySQL 和 Redis，先依次执行 `migrations/` 下的 SQL，再执行 `python -m scripts.seed_demo`、`uvicorn src.main:app --reload --port 8000` 和 `python -m src.worker`。前端需要支持 `/api/` 代理的静态服务器。批次验收统一从批次目录执行 `bash scripts/verify-project.sh gb-5210`。
 
 `.env` 管理 `COMPOSE_PROJECT_NAME`、三端口、`NETWORK_SUBNET`、四项 MySQL 配置、`JWT_SECRET` 和 `SEED_DEMO`。默认数据库/Redis 主机名为 `db`/`redis`，也可用 `DB_HOST`、`DB_PORT`、`REDIS_URL` 覆盖本地开发连接。`EXPORT_DIR` 默认为 `/app/artifacts`，API 与 worker 共用。完整 `.env` 由 `.env.example` 生成。
 
-后端共享枚举位于 `backend/src/constants/domain.py`，对应 SQL 枚举位于迁移文件。`Role` 用在登录授权、草案读写和运行可阅范围。`Branch` 用在工票和方案入参、结果拟合与外推诊断。`Basis` 用在方案入参和分解分支。`RunStatus` 用在运行路由、导出、worker 与草案前置状态。`DraftStatus` 用在草案发布和可阅控制。前端镜像枚举与工序名称在 `frontend/src/constants/domain.js`，分别用于侧栏身份、台账筛选、方案与运行表，以及结果和草案状态。
+后端共享枚举位于 `backend/src/constants/domain.py`，对应 SQL 枚举位于迁移文件。`Role` 用在登录授权、草案读写和运行可阅范围。`Branch` 用在工票和方案入参、结果拟合与外推诊断。`Basis` 用在方案入参和分解分支。`RunStatus` 用在运行路由、导出、worker 与草案前置状态。`DraftStatus` 用在草案发布和可阅控制。`ItemStatus` 用在补录明细的逐行状态与待处理清单。前端镜像枚举与工序名称在 `frontend/src/constants/domain.js`，分别用于侧栏身份、台账筛选、方案与运行表，以及结果和草案状态。
 
 ## 局限
 

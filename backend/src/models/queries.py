@@ -3,3 +3,6 @@ PLAN_COLUMNS = ('id, plan_key, version, label, focus_branch, control_branch, coe
                 'date_from, date_to, min_samples, created_by')
 RUN_COLUMNS = ('id, plan_id, status, snapshot_sha, failure, created_by, created_at, finished_at')
 DRAFT_COLUMNS = 'run_id, action_text, status, edited_by, edited_at'
+BATCH_COLUMNS = ('id, plan_id, run_id, status, total, inserted, revised, skipped, rejected, attempts, failure, '
+                 'created_by, created_at, finished_at')
+ITEM_COLUMNS = 'id, batch_id, seq, code, payload, status, reason, revision'

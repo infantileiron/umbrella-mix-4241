@@ -29,7 +29,17 @@ class DraftStatus(StrEnum):
     PUBLISHED = 'published'
 
 
+class ItemStatus(StrEnum):
+    PENDING = 'pending'
+    INSERTED = 'inserted'
+    REVISED = 'revised'
+    SKIPPED = 'skipped'
+    REJECTED = 'rejected'
+
+
 BRANCH_LABEL = {Branch.NORTH: '北埠修伞铺', Branch.SOUTH: '南桥修伞铺'}
 FEATURES = ('ribs', 'fabric', 'mechanism')
 TERMS = ('intercept', *FEATURES)
 METHOD = 'ob-twofold-ols-v1'
+INTAKE_MAX_ROWS = 500
+INTAKE_MAX_ATTEMPTS = 8

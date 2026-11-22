@@ -64,6 +64,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/migrations/001_initial.sql:/docker-entrypoint-initdb.d/001_initial.sql:ro
+      - ./backend/migrations/002_intake.sql:/docker-entrypoint-initdb.d/002_intake.sql:ro
     healthcheck:
       test: [CMD-SHELL, 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql -h 127.0.0.1 -u "$$MYSQL_USER" "$$MYSQL_DATABASE" -NBe "SELECT COUNT(*) FROM comparison_plans"']
       interval: 3s

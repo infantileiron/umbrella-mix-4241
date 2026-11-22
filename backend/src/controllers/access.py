@@ -33,3 +33,9 @@ def owner(user=Depends(current_user)):
     if user['role'] != Role.OWNER:
         raise HTTPException(403, '改进草案和发布由业务方负责')
     return user
+
+
+def intake_reader(user=Depends(current_user)):
+    if user['role'] not in (Role.ANALYST, Role.OWNER):
+        raise HTTPException(403, '补录批次由分析员维护、业务方查阅')
+    return user

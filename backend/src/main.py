@@ -5,14 +5,14 @@ from src.middlewares import errors
 from src.middlewares.request_id import request_id
 from src.middlewares.response_policy import response_policy
 from src.models.db import transaction
-from src.routes import plans, runs, session, tickets
+from src.routes import intake, plans, runs, session, tickets
 from src.utils.queue import redis
 
 app = FastAPI(title='补雨修伞 · 工时差额拆解', version='1.0.0')
 app.middleware('http')(request_id)
 app.middleware('http')(response_policy)
 errors.register(app)
-for module in (session, tickets, plans, runs):
+for module in (session, tickets, plans, runs, intake):
     app.include_router(module.router)
 
 

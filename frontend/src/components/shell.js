@@ -6,9 +6,10 @@ export const brand = `<div class="brand-mark" aria-hidden="true"><span></span></
   <div class="brand-name">补雨修伞<small>跨网点工时拆解</small></div>`;
 
 export function shell(active, user) {
+  const visible = user.role === 'observer' ? links.filter(([name]) => name !== 'batches') : links;
   return `<aside class="sidebar">
     <div class="brand">${brand}</div>
-    <nav aria-label="工作区">${links.map(([name, mark, label]) =>
+    <nav aria-label="工作区">${visible.map(([name, mark, label]) =>
       `<a href="#/${name}"${active === name ? ' aria-current="page"' : ''}><i>${mark}</i>${label}</a>`).join('')}</nav>
     <div class="sidebar-bottom"><div class="user"><b>${esc(user.display_name.split(' ')[0])}</b>
       <span>${esc(ROLE[user.role])}</span></div><button type="button" data-logout>退出登录 ↗</button></div>
